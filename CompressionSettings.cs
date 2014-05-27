@@ -25,7 +25,7 @@ namespace XCompression
 {
     public struct CompressionSettings
     {
-        public int Unknown;
+        public uint Flags;
         public uint WindowSize;
         public uint ChunkSize;
     }

@@ -45,7 +45,7 @@ namespace XCompression
         private CompressionContext(uint windowSize, uint chunkSize)
         {
             CompressionSettings settings;
-            settings.Unknown = 0;
+            settings.Flags = 0;
             settings.WindowSize = windowSize;
             settings.ChunkSize = chunkSize;
 

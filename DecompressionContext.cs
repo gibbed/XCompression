@@ -45,7 +45,7 @@ namespace XCompression
         public DecompressionContext(uint windowSize, uint chunkSize)
         {
             CompressionSettings settings;
-            settings.Unknown = 0;
+            settings.Flags = 0;
             settings.WindowSize = windowSize;
             settings.ChunkSize = chunkSize;
 
@@ -99,17 +99,11 @@ namespace XCompression
 
             var outputHandle = GCHandle.Alloc(outputBytes, GCHandleType.Pinned);
             var inputHandle = GCHandle.Alloc(inputBytes, GCHandleType.Pinned);
-
             var result = this.Decompress(this._Handle,
                                          outputHandle.AddrOfPinnedObject() + outputOffset,
                                          ref outputCount,
                                          inputHandle.AddrOfPinnedObject() + inputOffset,
                                          ref inputCount);
-            if (result != ErrorCode.None)
-            {
-                throw new InvalidOperationException("unknown error during compression: " +
-                                                    result.ToString());
-            }
             inputHandle.Free();
             outputHandle.Free();
             return result;
