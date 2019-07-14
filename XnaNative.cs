@@ -21,6 +21,7 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -44,53 +45,23 @@ namespace XCompression
         /// </summary>
         private static readonly NativeInfo[] _NativeInfos = new[]
         {
-            new NativeInfo("3.0.11010.0",
-                           "08dde3aeaa90772e9bf841aa30ad409d",
-                           0x1018D303,
-                           0x1018D293,
-                           0x1018D2DF,
-                           0x1018D3DA,
-                           0x1018D36A,
-                           0x1018D3B6),
-            new NativeInfo("3.1.10527.0",
-                           "fb193b2a3b5dc72d6f0ff6b86723c1ed",
-                           0x101963F1,
-                           0x1019633F,
-                           0x101963CB,
-                           0x101964DB,
-                           0x1019645F,
-                           0x101964B5),
-            new NativeInfo("4.0.20823.0",
-                           "993d6b608c47e867bcf10a064ff2d61a",
-                           0x10197933,
-                           0x10197881,
-                           0x1019790D,
-                           0x10197A1D,
-                           0x101979A1,
-                           0x101979F7),
-            new NativeInfo("4.0.30901.0",
-                           "cbffc669518ee511890f236fefffb4c1",
-                           0x10197933,
-                           0x10197881,
-                           0x1019790D,
-                           0x10197A1D,
-                           0x101979A1,
-                           0x101979F7),
+            new NativeInfo("3.0.11010.0", "08dde3aeaa90772e9bf841aa30ad409d", 0x1018D303, 0x1018D293, 0x1018D2DF, 0x1018D3DA, 0x1018D36A, 0x1018D3B6),
+            new NativeInfo("3.1.10527.0", "fb193b2a3b5dc72d6f0ff6b86723c1ed", 0x101963F1, 0x1019633F, 0x101963CB, 0x101964DB, 0x1019645F, 0x101964B5),
+            new NativeInfo("4.0.20823.0", "993d6b608c47e867bcf10a064ff2d61a", 0x10197933, 0x10197881, 0x1019790D, 0x10197A1D, 0x101979A1, 0x101979F7),
+            new NativeInfo("4.0.30901.0", "cbffc669518ee511890f236fefffb4c1", 0x10197933, 0x10197881, 0x1019790D, 0x10197A1D, 0x101979A1, 0x101979F7),
         };
 
         private static string ComputeMD5(string path)
         {
             using (var md5 = MD5.Create())
+            using (var input = File.OpenRead(path))
             {
-                using (var input = File.OpenRead(path))
+                var sb = new StringBuilder();
+                foreach (var b in md5.ComputeHash(input))
                 {
-                    var sb = new StringBuilder();
-                    foreach (var b in md5.ComputeHash(input))
-                    {
-                        sb.Append(b.ToString("x2"));
-                    }
-                    return sb.ToString();
+                    sb.Append(b.ToString("x2"));
                 }
+                return sb.ToString();
             }
         }
 
@@ -187,8 +158,7 @@ namespace XCompression
             var library = Kernel32.LoadLibrary(_AcceptableVersion.Path);
             if (library == IntPtr.Zero)
             {
-                throw new System.ComponentModel.Win32Exception("could not load XnaNative " +
-                                                               _AcceptableVersion.Info.Version);
+                throw new Win32Exception($"could not load XnaNative {_AcceptableVersion.Info.Version}");
             }
 
             var process = Process.GetCurrentProcess();
@@ -202,25 +172,24 @@ namespace XCompression
 
             context.XnaNativeHandle = library;
 
-            context.NativeCreateCompressionContext = GetFunction<Delegates.CreateCompressionContext>(module,
-                                                                                                     _AcceptableVersion.
-                                                                                                         Info.
-                                                                                                         CreateCompressionContextAddress);
-            context.NativeCompress = GetFunction<Delegates.Compress>(module, _AcceptableVersion.Info.CompressAddress);
-            context.NativeDestroyCompressionContext = GetFunction<Delegates.DestroyCompressionContext>(module,
-                                                                                                       _AcceptableVersion
-                                                                                                           .Info.
-                                                                                                           DestroyCompressionContextAddress);
-            context.NativeCreateDecompressionContext = GetFunction<Delegates.CreateDecompressionContext>(module,
-                                                                                                         _AcceptableVersion
-                                                                                                             .Info.
-                                                                                                             CreateDecompressionContextAddress);
-            context.NativeDecompress = GetFunction<Delegates.Decompress>(module,
-                                                                         _AcceptableVersion.Info.DecompressAddress);
-            context.NativeDestroyDecompressionContext = GetFunction<Delegates.DestroyDecompressionContext>(module,
-                                                                                                           _AcceptableVersion
-                                                                                                               .Info.
-                                                                                                               DestroyDecompressionContextAddress);
+            context.NativeCreateCompressionContext = GetFunction<Delegates.CreateCompressionContext>(
+                module,
+                _AcceptableVersion.Info.CreateCompressionContextAddress);
+            context.NativeCompress = GetFunction<Delegates.Compress>(
+                module,
+                _AcceptableVersion.Info.CompressAddress);
+            context.NativeDestroyCompressionContext = GetFunction<Delegates.DestroyCompressionContext>(
+                module,
+                _AcceptableVersion.Info.DestroyCompressionContextAddress);
+            context.NativeCreateDecompressionContext = GetFunction<Delegates.CreateDecompressionContext>(
+                module,
+                _AcceptableVersion.Info.CreateDecompressionContextAddress);
+            context.NativeDecompress = GetFunction<Delegates.Decompress>(
+                module,
+                _AcceptableVersion.Info.DecompressAddress);
+            context.NativeDestroyDecompressionContext = GetFunction<Delegates.DestroyDecompressionContext>(
+                module,
+                _AcceptableVersion.Info.DestroyDecompressionContextAddress);
             return true;
         }
 
@@ -228,7 +197,7 @@ namespace XCompression
         {
             if (address == IntPtr.Zero)
             {
-                throw new ArgumentNullException("address");
+                throw new ArgumentNullException(nameof(address));
             }
 
             return Marshal.GetDelegateForFunctionPointer(address, typeof(TDelegate));
@@ -239,12 +208,12 @@ namespace XCompression
         {
             if (module == null)
             {
-                throw new ArgumentNullException("module");
+                throw new ArgumentNullException(nameof(module));
             }
 
             if (address == IntPtr.Zero)
             {
-                throw new ArgumentNullException("address");
+                throw new ArgumentNullException(nameof(address));
             }
 
             address -= 0x10000000;
@@ -285,14 +254,15 @@ namespace XCompression
             public readonly IntPtr DecompressAddress;
             public readonly IntPtr DestroyDecompressionContextAddress;
 
-            public NativeInfo(string version,
-                              string hash,
-                              IntPtr createCompressionContextAddress,
-                              IntPtr compressAddress,
-                              IntPtr destroyCompressionContextAddress,
-                              IntPtr createDecompressionContextAddress,
-                              IntPtr decompressAddress,
-                              IntPtr destroyDecompressionContextAddress)
+            public NativeInfo(
+                string version,
+                string hash,
+                IntPtr createCompressionContextAddress,
+                IntPtr compressAddress,
+                IntPtr destroyCompressionContextAddress,
+                IntPtr createDecompressionContextAddress,
+                IntPtr decompressAddress,
+                IntPtr destroyDecompressionContextAddress)
             {
                 this.Valid = true;
                 this.Version = version;
@@ -305,14 +275,15 @@ namespace XCompression
                 this.DestroyDecompressionContextAddress = destroyDecompressionContextAddress;
             }
 
-            public NativeInfo(string version,
-                              string hash,
-                              int createCompressionContextAddress,
-                              int compressAddress,
-                              int destroyCompressionContextAddress,
-                              int createDecompressionContextAddress,
-                              int decompressAddress,
-                              int destroyDecompressionContextAddress)
+            public NativeInfo(
+                string version,
+                string hash,
+                int createCompressionContextAddress,
+                int compressAddress,
+                int destroyCompressionContextAddress,
+                int createDecompressionContextAddress,
+                int decompressAddress,
+                int destroyDecompressionContextAddress)
                 : this(
                     version,
                     hash,

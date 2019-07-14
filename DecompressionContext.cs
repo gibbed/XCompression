@@ -52,58 +52,59 @@ namespace XCompression
             var result = this.CreateDecompressionContext(1, settings, 1, out this._Handle);
             if (result != ErrorCode.None)
             {
-                throw new InvalidOperationException("unknown error when creating decompression context: " +
-                                                    result.ToString("X8"));
+                throw new InvalidOperationException($"unknown error when creating decompression context: {result:X8}");
             }
 
             this.WindowSize = windowSize;
             this.ChunkSize = chunkSize;
         }
 
-        public ErrorCode Decompress(byte[] inputBytes,
-                                    int inputOffset,
-                                    ref int inputCount,
-                                    byte[] outputBytes,
-                                    int outputOffset,
-                                    ref int outputCount)
+        public ErrorCode Decompress(
+            byte[] inputBytes,
+            int inputOffset,
+            ref int inputCount,
+            byte[] outputBytes,
+            int outputOffset,
+            ref int outputCount)
         {
             if (inputBytes == null)
             {
-                throw new ArgumentNullException("inputBytes");
+                throw new ArgumentNullException(nameof(inputBytes));
             }
 
             if (inputOffset < 0 || inputOffset >= inputBytes.Length)
             {
-                throw new ArgumentOutOfRangeException("inputOffset");
+                throw new ArgumentOutOfRangeException(nameof(inputOffset));
             }
 
             if (inputCount <= 0 || inputOffset + inputCount > inputBytes.Length)
             {
-                throw new ArgumentOutOfRangeException("inputCount");
+                throw new ArgumentOutOfRangeException(nameof(inputCount));
             }
 
             if (outputBytes == null)
             {
-                throw new ArgumentNullException("outputBytes");
+                throw new ArgumentNullException(nameof(outputBytes));
             }
 
             if (outputOffset < 0 || outputOffset >= outputBytes.Length)
             {
-                throw new ArgumentOutOfRangeException("outputOffset");
+                throw new ArgumentOutOfRangeException(nameof(outputOffset));
             }
 
             if (outputCount <= 0 || outputOffset + outputCount > outputBytes.Length)
             {
-                throw new ArgumentOutOfRangeException("outputCount");
+                throw new ArgumentOutOfRangeException(nameof(outputCount));
             }
 
             var outputHandle = GCHandle.Alloc(outputBytes, GCHandleType.Pinned);
             var inputHandle = GCHandle.Alloc(inputBytes, GCHandleType.Pinned);
-            var result = this.Decompress(this._Handle,
-                                         outputHandle.AddrOfPinnedObject() + outputOffset,
-                                         ref outputCount,
-                                         inputHandle.AddrOfPinnedObject() + inputOffset,
-                                         ref inputCount);
+            var result = this.Decompress(
+                this._Handle,
+                outputHandle.AddrOfPinnedObject() + outputOffset,
+                ref outputCount,
+                inputHandle.AddrOfPinnedObject() + inputOffset,
+                ref inputCount);
             inputHandle.Free();
             outputHandle.Free();
             return result;

@@ -70,10 +70,11 @@ namespace XCompression
         internal Delegates.Decompress NativeDecompress;
         internal Delegates.DestroyDecompressionContext NativeDestroyDecompressionContext;
 
-        internal ErrorCode CreateCompressionContext(int type,
-                                                    CompressionSettings settings,
-                                                    int flags,
-                                                    out IntPtr context)
+        internal ErrorCode CreateCompressionContext(
+            int type,
+            CompressionSettings settings,
+            int flags,
+            out IntPtr context)
         {
             if (this.XnaNativeHandle == IntPtr.Zero)
             {
@@ -84,11 +85,12 @@ namespace XCompression
             return (ErrorCode)this.NativeCreateCompressionContext(1, ref settings, flags, ref context);
         }
 
-        internal ErrorCode Compress(IntPtr context,
-                                    IntPtr output,
-                                    ref int outputSize,
-                                    IntPtr input,
-                                    ref int inputSize)
+        internal ErrorCode Compress(
+            IntPtr context,
+            IntPtr output,
+            ref int outputSize,
+            IntPtr input,
+            ref int inputSize)
         {
             if (this.XnaNativeHandle == IntPtr.Zero)
             {
@@ -108,10 +110,11 @@ namespace XCompression
             this.NativeDestroyCompressionContext(context);
         }
 
-        internal ErrorCode CreateDecompressionContext(int type,
-                                                      CompressionSettings settings,
-                                                      int flags,
-                                                      out IntPtr context)
+        internal ErrorCode CreateDecompressionContext(
+            int type,
+            CompressionSettings settings,
+            int flags,
+            out IntPtr context)
         {
             if (this.XnaNativeHandle == IntPtr.Zero)
             {
@@ -122,11 +125,12 @@ namespace XCompression
             return (ErrorCode)this.NativeCreateDecompressionContext(1, ref settings, flags, ref context);
         }
 
-        internal ErrorCode Decompress(IntPtr context,
-                                      IntPtr output,
-                                      ref int outputSize,
-                                      IntPtr input,
-                                      ref int inputSize)
+        internal ErrorCode Decompress(
+            IntPtr context,
+            IntPtr output,
+            ref int outputSize,
+            IntPtr input,
+            ref int inputSize)
         {
             if (this.XnaNativeHandle == IntPtr.Zero)
             {
