@@ -26,8 +26,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Win32;
 using MD5 = System.Security.Cryptography.MD5;
-using Registry = Microsoft.Win32.Registry;
 
 namespace XCompression
 {
@@ -96,52 +96,66 @@ namespace XCompression
 
         private static NativeInfo? FindAcceptableInfo(out string path)
         {
-            var versions = new[]
+            var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
+            using (baseKey)
             {
-                "v4.0", "v3.1", "v3.0"
-            };
-
-            foreach (var version in versions)
-            {
-                var keyName = @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\XNA\Framework\" + version;
-                path = Registry.GetValue(keyName, "NativeLibraryPath", null) as string;
-                if (string.IsNullOrEmpty(path) == true)
+                if (baseKey == null)
                 {
-                    continue;
+                    path = null;
+                    return null;
                 }
 
-                path = Path.GetFullPath(Path.Combine(path, "XnaNative.dll"));
-                if (File.Exists(path) == false)
+                var versions = new[] { "v4.0", "v3.1", "v3.0" };
+                foreach (var version in versions)
                 {
-                    continue;
-                }
+                    var subKeyName = @"SOFTWARE\Microsoft\XNA\Framework\" + version;
+                    var subKey = baseKey.OpenSubKey(subKeyName);
+                    using (subKey)
+                    {
+                        if (subKey == null)
+                        {
+                            continue;
+                        }
+                        path = subKey.GetValue("NativeLibraryPath", null) as string;
+                        if (string.IsNullOrEmpty(path) == true)
+                        {
+                            continue;
+                        }
+                    }
 
-                string hash;
-                try
-                {
-                    hash = ComputeMD5(path);
-                }
-                catch (FileNotFoundException)
-                {
-                    continue;
-                }
-                catch (DirectoryNotFoundException)
-                {
-                    continue;
-                }
-                catch (NotSupportedException)
-                {
-                    continue;
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    continue;
-                }
+                    path = Path.GetFullPath(Path.Combine(path, "XnaNative.dll"));
+                    if (File.Exists(path) == false)
+                    {
+                        continue;
+                    }
 
-                var info = _NativeInfos.FirstOrDefault(i => i.Hash == hash);
-                if (info.Valid == true)
-                {
-                    return info;
+                    string hash;
+                    try
+                    {
+                        hash = ComputeMD5(path);
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        continue;
+                    }
+                    catch (DirectoryNotFoundException)
+                    {
+                        continue;
+                    }
+                    catch (NotSupportedException)
+                    {
+                        continue;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        continue;
+                    }
+
+                    var info = _NativeInfos.FirstOrDefault(i => i.Hash == hash);
+                    if (info.Valid == true)
+                    {
+                        return info;
+                    }
                 }
             }
 
